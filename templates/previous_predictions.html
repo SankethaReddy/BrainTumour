@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Tumor Detection - Previous Predictions</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://media.istockphoto.com/id/1292254104/photo/magnetic-resonance-imaging-mri-photosensitive-epilepsy-seizures-neurological-diseases.jpg?s=612x612&w=0&k=20&c=ODrUc4TJLgh1U9C-i1Q72y3bLEKyRNnflAIU1qWMnDU=');
+            background-size: cover;
+            background-attachment: fixed;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .prediction-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 15px;
+        }
+        .prediction-table th {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            border-radius: 5px 5px 0 0;
+        }
+        .prediction-table td {
+            background-color: #ecf0f1;
+            padding: 15px;
+        }
+        .prediction-table tr:hover td {
+            background-color: #e0e6e8;
+            transition: background-color 0.3s ease;
+        }
+        .prediction-table tr td:first-child {
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+        .prediction-table tr td:last-child {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+        .scan-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .scan-image:hover {
+            transform: scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80%;
+            animation-name: zoom;
+            animation-duration: 0.6s;
+        }
+        @keyframes zoom {
+            from {transform:scale(0)} 
+            to {transform:scale(1)}
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .nav-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .nav-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav-button:hover {
+            background-color: #2980b9;
+        }
+        .prediction-positive {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .prediction-negative {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Previous Predictions</h1>
+        <table class="prediction-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Image</th>
+                    <th>Filename</th>
+                    <th>Prediction</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scan in scans %}
+                <tr>
+                    <td>{{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        <img src="{{ url_for('static', filename='uploads/' + scan.filename) }}" alt="Brain Scan" class="scan-image" onclick="openModal(this.src)">
+                    </td>
+                    <td>{{ scan.filename }}</td>
+                    <td class="{% if scan.prediction == 'Tumor' %}prediction-positive{% else %}prediction-negative{% endif %}">
+                        {{ scan.prediction }}
+                    </td>
+                    <td>{{ "{:.2%}".format(scan.confidence) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="nav-buttons">
+            <a href="{{ url_for('dashboard') }}" class="nav-button">Back to Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="nav-button">Logout</a>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        function openModal(imageSrc) {
+            var modal = document.getElementById("imageModal");
+            var modalImg = document.getElementById("modalImage");
+            modal.style.display = "flex";
+            modalImg.src = imageSrc;
+        }
+
+        function closeModal() {
+            var modal = document.getElementById("imageModal");
+            modal.style.display = "none";
+        }
+
+        // Close the modal when clicking outside the image
+        window.onclick = function(event) {
+            var modal = document.getElementById("imageModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
